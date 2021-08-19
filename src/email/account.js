@@ -18,8 +18,3 @@ const sendCancelationEmail = (email,name)=>{
         text:`Selamat tinggal, ${name}. Kami sedih melihat anda meninggalkan aplikasi kami. Tolong beritahu kamu untuk menjadi lebih baik kedepannya. Terimakasih!`
     })
 }
-
-module.exports = {
-    sendWelcomeEmail,
-    sendCancelationEmail
-}
