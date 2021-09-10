@@ -7,9 +7,6 @@
 <body>
 Welcome to arsamuda radio
 
-<audio id="live-stream">
-    <source type="audio/mpeg" src="/b.mp3">
-</audio>
 <p><button id="play-radio">Play</button></p>
 <p id="now-playing"></p>
 </body>
@@ -28,7 +25,7 @@ Welcome to arsamuda radio
         }
     }
 
-    const musicmeta = fetch('http://52.187.59.153:3738/status-json.xsl').then((response)=>{
+    const musicmeta = fetch('https://masakasik.me/status-json.xsl').then((response)=>{
         response.json().then((data)=>{
             if (data.icestats.source){
                 nowplaying.textContent = `Now Playing : ${data.icestats.source.title}`

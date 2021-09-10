@@ -11,7 +11,7 @@ playbutton.onclick = ()=>{
     }
 }
 
-const musicmeta = fetch('http://52.187.59.153:3738/status-json.xsl').then((response)=>{
+const musicmeta = fetch('https://masakasik.me/status-json.xsl').then((response)=>{
     response.json().then((data)=>{
         if (data.icestats.source){
             nowplaying.textContent = `Now Playing : ${data.icestats.source.title}`
