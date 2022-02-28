@@ -10,9 +10,11 @@ router.post('/subscribe',async (req,res)=>{
     const mail = new Mail(req.body)
     try {
         await mail.save()
-        res.status(201).send('Saved')
+        console.log(req.body)
+        res.status(200).render('coming_soon',{titlepage:'Sukses'})
+        // res.status(201).send('Saved')
     }catch (e){
-        res.status(500).send(e.errors.email.message)
+        res.status(500).send(e)
     }
 })
 

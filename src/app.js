@@ -2,8 +2,8 @@ require('./db/mongoose')
 const express = require('express')
 const userRouter = require('./routers/user')
 const homeRouter = require('./routers/home')
-const session = require('express-session')
-const methodOverride = require('method-override')
+// const session = require('express-session')
+// const methodOverride = require('method-override')
 // const MongoStore = require('connect-mongo')(session)
 
 const hbs = require('hbs')
@@ -22,9 +22,11 @@ app.use(express.static(publicDirectoryPath))
 app.set('views',viewsPath)
 app.set('view engine', 'hbs')
 hbs.registerPartials(vartialsPath)
-
 app.use(express.json())
-app.use(userRouter)
+
+app.use(express.urlencoded({extended: false}))
+
 app.use(homeRouter)
+app.use(userRouter)
 
 module.exports = app
