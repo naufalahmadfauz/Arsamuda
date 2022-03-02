@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
     {{>header}}
+    <link rel="preconnect" href="https://www.google.com">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--===============================================================================================-->	
 {{>localassets}}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 	<div class="size1 bg0 where1-parent">
@@ -37,7 +41,7 @@
                         <input class="s2-txt1 placeholder0 input100" type="email" name="email" placeholder="Alamat Email">
 						<span class="focus-input100"></span>
 					</div>
-
+                    <div class="g-recaptcha" data-sitekey="6LdN-qkeAAAAAN7BgqIbCshSTZMX7kjbY2eRExQh"></div>
 					<div class="w-full">
 						<button type="submit" class="flex-c-m s2-txt2 size4 bg4 bor1 hov1 trans-04">
 							IKUTI!
