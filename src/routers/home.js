@@ -9,7 +9,7 @@ router.get('/',async (req,res) => {
 
 router.post('/subscribe',async (req,res)=>{
     const mail = new Mail(req.body)
-    const secrettoken = process.env.SECRET_TOKEN
+    const secrettoken = process.env.CAPTCHA_SECRET
     const clienttoken = req.body['g-recaptcha-response']
     const clientIP = req.ip
     try {
