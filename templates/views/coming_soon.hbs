@@ -4,7 +4,6 @@
     {{>header}}
     <link rel="preconnect" href="https://www.google.com">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--===============================================================================================-->	
 {{>localassets}}
@@ -16,7 +15,7 @@
 		<div class="flex-c-m bg-img1 size2 where1 overlay1 where2 respon2" style="background-image: url('img/coming/bg.png');">
 			<div class="wsize2 flex-w flex-c-m cd100 js-tilt">
 				<div class="flex-col-c-m size6 bor2 m-l-10 m-r-10 m-t-15">
-					<span class="l2-txt1 p-b-9 days">0</span>
+					<span class="l2-txt1 p-b-9 days">30</span>
 					<span class="s2-txt4">Hari</span>
 				</div>
 			</div>
@@ -35,15 +34,15 @@
 					Daftarkan email kamu biar gak ketinggalan tanggal siaran Arsamuda ya!
 				</p>
 
-				<form method="POST" action="/subscribe" class="contact100-form ">
+				<form method="POST" action="/subscribe" class="contact100-form validate-form ">
 					<div class="wrap-input100 m-b-20 validate-input" data-validate = "Email is required: ex@abc.xyz">
 <!--                        <input type="email" name="email">-->
-                        <input class="s2-txt1 placeholder0 input100" type="email" name="email" placeholder="Alamat Email">
-						<span class="focus-input100"></span>
+                        <input class="s2-txt1 placeholder0 input100" type="text" name="email" placeholder="Alamat Email">
+                        <span class="focus-input100"></span>
 					</div>
                     <div class="g-recaptcha" data-sitekey="6LdN-qkeAAAAAN7BgqIbCshSTZMX7kjbY2eRExQh"></div>
 					<div class="w-full">
-						<button type="submit" class="flex-c-m s2-txt2 size4 bg4 bor1 hov1 trans-04">
+						<button class="flex-c-m s2-txt2 size4 bg4 bor1 hov1 trans-04">
 							IKUTI!
 						</button>
 					</div>
