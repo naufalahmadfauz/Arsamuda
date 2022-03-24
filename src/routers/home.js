@@ -5,9 +5,11 @@ const fetch = require('node-fetch')
 const sendmail = require('../email/account')
 
 router.get('/', async (req, res) => {
-    const titlepage = req.session.titlepage
-    console.log(req.socket.remoteAddress)
-    res.render('coming_soon',{titlepage,ingfo:req.flash('ingfo')})
+    res.render('coming_soon',{titlepage:'Coming Soon',
+        flash:req.flash('flash'),
+        flash_title:req.flash('flash-title'),
+        flash_message:req.flash('flash-message')
+    })
 })
 
 router.post('/subscribe', async (req, res) => {
@@ -30,23 +32,26 @@ router.post('/subscribe', async (req, res) => {
     if (dataCaptcha.success !== false) {
         try {
             await mail.save()
-            await sendmail('supernaufalboy@gmail.com',req.body['email'])
-            req.session.titlepage ='Sukses'
+            await sendmail('naufalahmadfauz@gmail.com',req.body['email'])
+            req.flash('flash', 'success')
+            req.flash('flash-title','Sukses')
+            req.flash('flash-message','Selamat anda telah sukses berlangganan!')
             res.status(201).redirect('/')
-            // res.status(200).render('coming_soon', {titlepage: 'Sukses'})
         } catch (e) {
-            res.status(500).send(e)
+            req.flash('flash', 'error')
+            req.flash('flash-title','Gagal')
+            req.flash('flash-message','Terjadi kesalahan server,coba lagi!')
+            res.status(500).redirect('/')
         }
     }else {
-        req.session.titlepage ='Gagal'
-        res.redirect('/')
-        // res.status(200).render('coming_soon', {titlepage: 'Failed'})
+        req.flash('flash', 'error')
+        req.flash('flash-title','Gagal')
+        req.flash('flash-message','Captcha gagal silahkan ulangi kembali')
+        res.status(304).redirect('/')
     }
-
 })
 
 router.get('/live', async (req, res) => {
     res.redirect('/')
-    // res.render('home')
 })
 module.exports = router

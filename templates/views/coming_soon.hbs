@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+ <link rel="stylesheet" href="/css/iziToast.min.css">
 <head>
     {{>header}}
     <link rel="preconnect" href="https://www.google.com">
@@ -23,11 +24,14 @@
 		<!-- Form -->
 		<div class="size3 flex-col-sb flex-w p-l-75 p-r-75 p-t-45 p-b-45 respon1">
 			<div class="wrap-pic1">
-				<img src="img/coming/icons/logz.png" alt="LOGO">
+<!--                <img src="img/coming/icons/logz.png" alt="LOGO" >-->
+                <a href="/"><img src="img/coming/icons/logz.png" alt="LOGO" ></a>
 			</div>
-
 			<div class="p-t-50 p-b-60">
-				<p class="m1-txt1 p-b-36">
+                {{#if flash}}
+
+                {{/if}}
+                <p class="m1-txt1 p-b-36">
 					Hai sobat <span class="m1-txt2">Arsamuda</span>, Website kami sedang dalam proses maintenance.
 				</p>
 				<p class="m2-txt1 p-b-36">
@@ -65,5 +69,15 @@
 		</div>
 	</div>
 {{>scripts}}
+{{#if flash}}
+    <script>
+        window.onload = ()=>{
+            iziToast.{{flash}}({
+                title: "{{flash_title}}",
+                message: "{{flash_message}}"
+            });
+        }
+    </script>
+{{/if}}
 </body>
 </html>
