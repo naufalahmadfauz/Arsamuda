@@ -3,12 +3,15 @@ const router = new express.Router()
 const Mail = require('../models/Mailing')
 const fetch = require('node-fetch')
 const sendmail = require('../email/account')
-
+let dayjs = require('dayjs')
 router.get('/', async (req, res) => {
-    res.render('coming_soon',{titlepage:'Coming Soon',
+    let countdown = dayjs().diff('2022-05-04','day').toString().slice(1)
+    res.render('coming_soon',{
+        titlepage:'Coming Soon',
         flash:req.flash('flash'),
         flash_title:req.flash('flash-title'),
-        flash_message:req.flash('flash-message')
+        flash_message:req.flash('flash-message'),
+        countdown
     })
 })
 

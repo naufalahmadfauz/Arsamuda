@@ -30,7 +30,10 @@ app.use(express.urlencoded({extended: false}))
 app.use(session({
     secret: process.env.SESSION_SECRET,
     saveUninitialized:true,
-    cookie: { maxAge: 300000 },
+    cookie: {
+        maxAge: 300000,
+        sameSite:'lax'
+    },
     resave: false,
     store:MongoStore.create({
         mongoUrl : process.env.MONGODB_URL
