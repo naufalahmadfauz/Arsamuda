@@ -5,7 +5,8 @@ const homeRouter = require('./routers/home')
 const session = require('express-session')
 const MongoStore = require('connect-mongo')
 const flash = require('connect-flash')
-// const methodOverride = require('method-override')
+const compression = require('compression')
+const {filter} = require("compression");
 
 const hbs = require('hbs')
 const path = require("path");
@@ -26,7 +27,6 @@ hbs.registerPartials(vartialsPath)
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 
-
 app.use(session({
     secret: process.env.SESSION_SECRET,
     saveUninitialized:true,
@@ -44,3 +44,12 @@ app.use(homeRouter)
 app.use(userRouter)
 
 module.exports = app
+
+//to be implemented later
+// app.use(compression({
+//     filter: function (req,res) {
+//         if (req.headers['x-no-compression']){
+//             return false
+//         }else return filter(req,res)
+//     }
+// }))
