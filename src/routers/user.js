@@ -16,12 +16,15 @@ const upload = multer({
     }
 })
 
-router.post('/users', async (req, res) => {
+router.post('/daftar', async (req, res) => {
     const user = new User(req.body)
     try {
+        if (req.body['role']){
+            throw new Error('Role tidak boleh diinput!')
+        }
         await user.save()
-
         const token = await user.generateAuthToken()
+        req.session.token = token
         res.status(201).send({user, token})
     } catch (e) {
         res.status(400).send(e)

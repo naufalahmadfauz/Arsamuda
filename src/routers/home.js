@@ -55,6 +55,6 @@ router.post('/subscribe', async (req, res) => {
 })
 
 router.get('/live', async (req, res) => {
-    res.redirect('/')
+    res.render('index')
 })
 module.exports = router

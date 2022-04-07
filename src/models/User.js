@@ -4,19 +4,10 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
 
 const userSchema = new mongoose.Schema({
-    name:{
+    nama:{
         type:String,
         required:true,
         trim:true
-    },
-    age:{
-        type:Number,
-        default:0,
-        validate(value){
-            if (value<0){
-                throw new Error('Umur Harus Angka Positif')
-            }
-        }
     },
     email:{
         type:String,
@@ -41,6 +32,17 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
+    biodata:{
+        type:String,
+        required:false,
+        trim:true,
+        default:'Hi!',
+    },
+    role:{
+        type:Number,
+        required:true,
+        default:'1',
+    },
     tokens:[{
         token:{
             type:String,
@@ -57,7 +59,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.methods.generateAuthToken = async function(){
     const user = this
-    const token = jwt.sign({_id:user._id.toString()},process.env.JWT_SECRET)
+    const token = await jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRET)
 
     user.tokens = user.tokens.concat({token})
 
