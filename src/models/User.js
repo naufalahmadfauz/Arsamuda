@@ -43,12 +43,6 @@ const userSchema = new mongoose.Schema({
         required:true,
         default:'1',
     },
-    tokens:[{
-        token:{
-            type:String,
-            required:true
-        }
-    }],
     avatar:{
         type:Buffer,
     }
@@ -59,7 +53,10 @@ const userSchema = new mongoose.Schema({
 
 userSchema.methods.generateAuthToken = async function(){
     const user = this
-    const token = await jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRET)
+    const token = await jwt.sign({
+        _id: user._id.toString(),
+        email:user.email
+    }, process.env.JWT_SECRET)
 
     user.tokens = user.tokens.concat({token})
 

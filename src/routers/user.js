@@ -16,26 +16,27 @@ const upload = multer({
     }
 })
 
-router.post('/daftar', async (req, res) => {
+router.post('/signup', async (req, res) => {
     const user = new User(req.body)
     try {
         if (req.body['role']){
             throw new Error('Role tidak boleh diinput!')
         }
         await user.save()
-        const token = await user.generateAuthToken()
-        req.session.token = token
-        res.status(201).send({user, token})
+        // const token = await user.generateAuthToken()
+        req.session.userid = user._id.toString()
+        res.status(201).send({user})
     } catch (e) {
         res.status(400).send(e)
     }
 })
 
-router.post('/users/login', async (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
-        const token = await user.generateAuthToken()
-        res.send({user, token})
+        // const token = await user.generateAuthToken()
+        req.session.userid = user._id.toString()
+        res.send({user})
     } catch (e) {
         res.status(400).send()
     }
@@ -43,12 +44,13 @@ router.post('/users/login', async (req, res) => {
 
 router.post('/users/logout', auth, async (req, res) => {
     try {
-        req.user.tokens = req.user.tokens.filter((token) => {
-            return token.token !== req.token
+        // req.user.tokens = req.user.tokens.filter((token) => {
+        //     return token.token !== req.token
+        // })
+        // await req.user.save()
+        req.session.destroy(()=>{
+            res.status(200).send()
         })
-        await req.user.save()
-
-        res.send()
     } catch (e) {
         res.status(500).send()
     }

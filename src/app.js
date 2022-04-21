@@ -28,7 +28,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     saveUninitialized: true,
     cookie: {
-        maxAge: 300000,
+        maxAge: 5000,
         sameSite: 'lax'
     },
     resave: false,
