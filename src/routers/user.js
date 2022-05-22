@@ -4,7 +4,8 @@ const auth = require('../middleware/auth')
 const User = require('../models/User')
 const multer = require('multer')
 const sharp = require('sharp')
-
+const randomString = require('randomstring')
+const path = require("path");
 
 const upload = multer({
     limits: {
@@ -18,15 +19,27 @@ const upload = multer({
     }
 })
 
+const uploadCoverStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'covers')
+    },
+    filename: function (req, file, cb) {
+        const extfilename = path.extname(file.originalname)
+        cb(null, file.fieldname + '_' + Date.now() + '_' + randomString.generate({length: 5})+extfilename)
+    }
+})
+
 const uploadCover = multer({
+    storage: uploadCoverStorage,
+
     limits: {
-        fileSize: 1000000
+        fileSize: 10000000
     },
     fileFilter(req, file, cb) {
         if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
             return cb(new Error('File Must an image'))
         }
-        cb(undefined, true)
+        cb(null, true)
     }
 })
 
@@ -76,22 +89,22 @@ router.get('/users/me', auth, async (req, res) => {
 })
 
 router.patch('/users/me', auth, async (req, res) => {
-        const updates = Object.keys(req.body)
-        const allowedUpdates = ['nama', 'email', 'password', 'biodata', 'tglLahir']
-        const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+    const updates = Object.keys(req.body)
+    const allowedUpdates = ['nama', 'email', 'password', 'biodata', 'tglLahir']
+    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
-        if (!isValidOperation) {
-            return res.status(400).send({error: 'Invalid updates'})
-        }
+    if (!isValidOperation) {
+        return res.status(400).send({error: 'Invalid updates'})
+    }
 
-        try {
-            updates.forEach((update => req.user[update] = req.body[update]))
-            await req.user.save()
-            res.send(req.user)
-        } catch (e) {
-            res.status(400).send(e)
-        }
-    })
+    try {
+        updates.forEach((update => req.user[update] = req.body[update]))
+        await req.user.save()
+        res.send(req.user)
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
 
 router.delete('/users/me', auth, async (req, res) => {
     try {
@@ -130,12 +143,14 @@ router.get('/users/:id/avatar', async (req, res) => {
     }
 })
 
-router.post('/users/me/cover', auth, async (req,res)=>{
-    try{
-
-    }catch (e) {
-
+router.post('/users/me/cover', auth, uploadCover.single('cover'), async (req, res, next) => {
+    try {
+        res.send('ok')
+    } catch (e) {
+        res.status(500).send(e)
     }
+},(error,req,res,next)=>{
+    res.status(400).send({error: error.message})
 })
 
 module.exports = router
