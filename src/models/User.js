@@ -43,6 +43,10 @@ const userSchema = new mongoose.Schema({
         required:true,
         default:'1',
     },
+    tglLahir:{
+      type:Date,
+      required:true,
+    },
     avatar:{
         type:Buffer,
     }
@@ -70,7 +74,6 @@ userSchema.methods.toJSON =  function(){
     const userObject = user.toObject()
 
     delete userObject.password
-    delete userObject.tokens
     delete userObject.avatar
 
     return userObject
