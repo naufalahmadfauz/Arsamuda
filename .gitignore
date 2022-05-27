@@ -3,5 +3,6 @@ config
 .idea
 tests
 arsadb/
+azurite/
 catatan.txt
 captcha.txt
