@@ -6,17 +6,7 @@ const multer = require('multer')
 const sharp = require('sharp')
 const randomString = require('randomstring')
 const path = require("path");
-const {BlobServiceClient} = require("@azure/storage-blob");
-const util = require('util')
-const {createReadStream, createWriteStream, pipe} = require('fs')
-//connection string dari storage accout
-// const connStr = "DefaultEndpointsProtocol=https;AccountName=arsamudaazurestorage;AccountKey=QZRUx8cPlhYMJtLhpWZOahP0xKSqCdvYFTPYbArjMIbjmTqwS+rkgUfLGWqdHX6cG0ZNhGqy3R43mcOawU1wXw==;EndpointSuffix=core.windows.net";
-const connStr = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1";
-//inisialisasi atau buka koneksi ke azure dengan connection string
-const blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
-const containerName = "arsamudapicturestorage";
-const containerClient = blobServiceClient.getContainerClient(containerName);
-const blobName = "Capture.PNG";
+const {createAzureContainer,listAzureContainers,uploadBlob,listBlob,downloadBlob,deleteBlob} = require('../functions/imageUpload')
 
 const upload = multer({
     limits: {
@@ -32,7 +22,7 @@ const upload = multer({
 
 const uploadCoverStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'covers')
+        cb(null, 'storage/covers')
     },
     filename: function (req, file, cb) {
         const extfilename = path.extname(file.originalname)
@@ -96,7 +86,6 @@ router.post('/users/logout', auth, async (req, res) => {
 //Implement logoutAll
 
 router.get('/users/me', auth, async (req, res) => {
-
     res.send(req.user)
 })
 
@@ -155,8 +144,22 @@ router.get('/users/:id/avatar', async (req, res) => {
     }
 })
 
+router.get('/users/me/cover',auth, async (req, res) => {
+    try {
+        let downloadPicture = await downloadBlob(req.body.coverPicturename)
+        downloadPicture.pipe(res)
+    }catch (e) {
+        res.status(404).send(e)
+    }
+})
+
 router.post('/users/me/cover', auth, uploadCover.single('cover'), async (req, res, next) => {
     try {
+        const picPath = path.join(__dirname,`../../storage/covers/${req.file.filename}`)
+        const uploadPicCover = await uploadBlob(picPath,req.file.filename)
+        console.clear()
+        console.log(req.file)
+        console.log(uploadPicCover)
         res.send('ok')
     } catch (e) {
         res.status(500).send(e)
@@ -165,62 +168,66 @@ router.post('/users/me/cover', auth, uploadCover.single('cover'), async (req, re
     res.status(400).send({error: error.message})
 })
 
-
-router.get('/createazurecontainer', async (req, res, next) => {
-    //dapatkan nama container dari containername dengna koneksi yang sudah dibuka dari blobserviceclient
-
-    //upload query buat bikin container nya ke azure,fungsi asyncronous karena butuh waktu
-    const createContainerResponse = await containerClient.create();
-    console.log(`Create container ${containerName} successfully`, createContainerResponse.requestId)
-
-    res.send()
-})
-
-router.get('/listazurecontainer', async (req, res, next) => {
-    let i = 1;
-    let containers = blobServiceClient.listContainers();
-    for await (const container of containers) {
-        console.log(`Container ${i++}: ${container.name}`);
-    }
-    res.send()
-})
-
-router.get('/uploadblob', async (req, res, next) => {
+router.delete('/users/me/cover', async (req, res) => {
     try {
-
-        const imagepath = path.join(__dirname, '../../public/img/meme.jpg')
-        const pic = createReadStream(imagepath, {highWaterMark: 8000000})
-
-        const blockBlobClient = containerClient.getBlockBlobClient(req.body.pictureName);
-        const uploadBlobResponse = await blockBlobClient.uploadStream(pic);
-        console.log(`Upload block blob ${blobName} successfully`, uploadBlobResponse.requestId);
-
-        res.status(201).send('OK')
-    } catch (err) {
-        res.status(400).send('NOT OK')
+        const deletePicture = await deleteBlob(req.body.pictureName)
+        console.log(deletePicture)
+        res.sendStatus(200)
+    }catch (e) {
+        res.status(404).send(e)
     }
 })
 
-router.get('/listblobs', async (req, res, next) => {
-    let i = 1;
-    let blobs = containerClient.listBlobsFlat();
-    for await (const blob of blobs) {
-        console.log(`Blob ${i++}: ${blob.name}`);
+
+
+router.get('/createContainer',async (req, res,next)=>{
+    const createContainerResponse = await createAzureContainer(req.body.nameContainer)
+    console.log(createContainerResponse)
+    res.send()
+})
+
+router.get('/listContainer',async (req, res,next)=>{
+    let containers = await listAzureContainers()
+    for await (const container of containers){
+        console.log(container.name)
     }
     res.send()
 })
 
-router.get('/downloadblob', async (req, res, next) => {
-    try {
-        const blobClient = containerClient.getBlobClient(req.body.pictureName);
-        const downloadBlockBlobResponse = await blobClient.download(0)
-        console.log("Downloaded blob content", downloadBlockBlobResponse.readableStreamBody);
-        downloadBlockBlobResponse.readableStreamBody.pipe(res)
-    } catch (e) {
-        res.status(404).send('Not Found')
-    }
-
+router.get('/uploadBlob',async (req, res,next) => {
+    const imagePath = path.join(__dirname,'../../public/img/1920.png')
+    const uploadRespon = await uploadBlob(imagePath,req.body.pictureName)
+    console.log(uploadRespon)
+    res.send()
 })
 
+router.get('/listBlob', async (req, res,next)=>{
+    console.clear()
+    const listBlobs = await listBlob()
+
+    for await (const iterated of listBlobs){
+        console.log(iterated.name)
+    }
+    res.send()
+})
+
+router.get('/downloadBlob',async (req, res,next) =>{
+    console.clear()
+    try {
+        const downloadPicture = await downloadBlob(req.body.pictureName)
+        downloadPicture.pipe(res)
+    }catch (e) {
+        res.status(500).send()
+    }
+})
+
+router.delete('/deleteBlob',async (req, res,next) =>{
+    try{
+        const deletePicture = await deleteBlob(req.body.pictureName)
+        res.send(deletePicture)
+    }catch (e) {
+        res.status(500).send()
+    }
+})
 
 module.exports = router
