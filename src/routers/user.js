@@ -6,8 +6,22 @@ const multer = require('multer')
 const sharp = require('sharp')
 const randomString = require('randomstring')
 const path = require("path");
+const fs = require('fs')
+const util = require('util')
 const {createAzureContainer,listAzureContainers,uploadBlob,listBlob,downloadBlob,deleteBlob} = require('../functions/imageUpload')
 
+const storageFolder = async ()=>{
+    const pathtopic = path.join(__dirname,'../../storage/covers')
+    try {
+        const statsFolderPromisified = util.promisify(fs.stat)
+        await statsFolderPromisified(pathtopic)
+        return ('Folder exists')
+    }catch (e) {
+        return fs.mkdir(pathtopic,{recursive:true},(err)=>{
+            if (err) throw err
+        })
+    }
+}
 const upload = multer({
     limits: {
         fileSize: 1000000
@@ -43,6 +57,8 @@ const uploadCover = multer({
         cb(null, true)
     }
 })
+
+
 
 router.post('/signup', async (req, res) => {
     const user = new User(req.body)
@@ -153,7 +169,10 @@ router.get('/users/me/cover',auth, async (req, res) => {
     }
 })
 
-router.post('/users/me/cover', auth, uploadCover.single('cover'), async (req, res, next) => {
+router.post('/users/me/cover', auth,async(req,res,next)=>{
+    await storageFolder()
+    next()
+} ,uploadCover.single('cover'), async (req, res, next) => {
     try {
         const picPath = path.join(__dirname,`../../storage/covers/${req.file.filename}`)
         const uploadPicCover = await uploadBlob(picPath,req.file.filename)
@@ -162,9 +181,14 @@ router.post('/users/me/cover', auth, uploadCover.single('cover'), async (req, re
         console.log(uploadPicCover)
         res.send('ok')
     } catch (e) {
+        console.error(e)
         res.status(500).send(e)
     }
 }, (error, req, res, next) => {
+    console.clear()
+    if (error.code === 'ENOENT'){
+        res.status(400).send({error: 'Storage directory does not exist,try again.'})
+    }else
     res.status(400).send({error: error.message})
 })
 
