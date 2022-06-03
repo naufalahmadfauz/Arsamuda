@@ -25,14 +25,13 @@ const listBlob = async ()=>{
     return containerClient.listBlobsFlat()
 }
 const downloadBlob = async (pictureName)=>{
-    const blobClient = containerClient.getBlobClient(pictureName);
+    const blobClient = containerClient.getBlockBlobClient(pictureName);
     return (await blobClient.download(0)).readableStreamBody
 }
 
 const deleteBlob = async(pictureName)=>{
     const blobClient = containerClient.getBlockBlobClient(pictureName)
-    return await blobClient.deleteIfExists()
-
+    return await blobClient.deleteIfExists({deleteSnapshots:"include"})
 }
 
 module.exports = {createAzureContainer,listAzureContainers,uploadBlob,listBlob,downloadBlob,deleteBlob}

@@ -1,64 +1,20 @@
 const express = require('express')
 const router = new express.Router()
 const auth = require('../middleware/auth')
+const errorHandler = require('../middleware/errorHandler')
 const User = require('../models/User')
-const multer = require('multer')
 const sharp = require('sharp')
-const randomString = require('randomstring')
 const path = require("path");
-const fs = require('fs')
-const util = require('util')
-const {createAzureContainer,listAzureContainers,uploadBlob,listBlob,downloadBlob,deleteBlob} = require('../functions/imageUpload')
-
-const storageFolder = async ()=>{
-    const pathtopic = path.join(__dirname,'../../storage/covers')
-    try {
-        const statsFolderPromisified = util.promisify(fs.stat)
-        await statsFolderPromisified(pathtopic)
-        return ('Folder exists')
-    }catch (e) {
-        return fs.mkdir(pathtopic,{recursive:true},(err)=>{
-            if (err) throw err
-        })
-    }
-}
-const upload = multer({
-    limits: {
-        fileSize: 1000000
-    },
-    fileFilter(req, file, cb) {
-        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-            return cb(new Error('File Must an image'))
-        }
-        cb(undefined, true)
-    }
-})
-
-const uploadCoverStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'storage/covers')
-    },
-    filename: function (req, file, cb) {
-        const extfilename = path.extname(file.originalname)
-        cb(null, file.fieldname + '_' + Date.now() + '_' + randomString.generate({length: 5}) + extfilename)
-    }
-})
-
-const uploadCover = multer({
-    storage: uploadCoverStorage,
-
-    limits: {
-        fileSize: 10000000
-    },
-    fileFilter(req, file, cb) {
-        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-            return cb(new Error('File Must an image'))
-        }
-        cb(null, true)
-    }
-})
-
-
+const {
+    createAzureContainer,
+    listAzureContainers,
+    uploadBlob,
+    listBlob,
+    downloadBlob,
+    deleteBlob
+} = require('../functions/imageUpload')
+const {storageFolder, uploadCover, uploadCoverStorage, upload} = require("../functions/multerConfiguration")
+uploadCoverStorage
 
 router.post('/signup', async (req, res) => {
     const user = new User(req.body)
@@ -160,96 +116,122 @@ router.get('/users/:id/avatar', async (req, res) => {
     }
 })
 
-router.get('/users/me/cover',auth, async (req, res) => {
+router.get('/users/me/cover', auth, async (req, res, next) => {
     try {
         let downloadPicture = await downloadBlob(req.body.coverPicturename)
         downloadPicture.pipe(res)
-    }catch (e) {
-        res.status(404).send(e)
-    }
-})
-
-router.post('/users/me/cover', auth,async(req,res,next)=>{
-    await storageFolder()
-    next()
-} ,uploadCover.single('cover'), async (req, res, next) => {
-    try {
-        const picPath = path.join(__dirname,`../../storage/covers/${req.file.filename}`)
-        const uploadPicCover = await uploadBlob(picPath,req.file.filename)
-        console.clear()
-        console.log(req.file)
-        console.log(uploadPicCover)
-        res.send('ok')
     } catch (e) {
-        console.error(e)
-        res.status(500).send(e)
+        if (e.message.match(/The specified blob does not exist/)) {
+            e.message = 'Picture does not exist.';
+            next(e);
+        } else {
+            next(e);
+        }
     }
-}, (error, req, res, next) => {
-    console.clear()
-    if (error.code === 'ENOENT'){
-        res.status(400).send({error: 'Storage directory does not exist,try again.'})
-    }else
-    res.status(400).send({error: error.message})
-})
+}, errorHandler)
 
-router.delete('/users/me/cover', async (req, res) => {
+
+router.post('/users/me/cover', auth, uploadCover.single('cover'), async (req, res, next) => {
     try {
-        const deletePicture = await deleteBlob(req.body.pictureName)
-        console.log(deletePicture)
-        res.sendStatus(200)
-    }catch (e) {
-        res.status(404).send(e)
+        const picPath = path.join(__dirname, `../../storage/covers/${req.file.filename}`)
+        await uploadBlob(picPath, req.file.filename)
+        res.send({status: "Picture uploaded successfully"})
+    } catch (e) {
+        next(e)
     }
+}, (err, req, res, next) => {
+    console.clear()
+    if (err.code === 'ENOENT') {
+        storageFolder().then(status => console.log('created ', status))
+        res.send({err: 'Storage directory does not exist,try again.'})
+    } else
+        res.send({err: err.message})
 })
 
 
+router.post('/users/me/picpost', auth, uploadCover.array('picpost', 5), async (req, res, next) => {
+    console.clear()
+    try {
+        for (const file of req.files) {
+            let picPath = path.join(__dirname, `../../storage/covers/${file.filename}`)
+            console.log(file)
+            await uploadBlob(picPath, file.filename)
+        }
 
-router.get('/createContainer',async (req, res,next)=>{
+        res.send({status: "Picture uploaded successfully."})
+    } catch (e) {
+        next('Something went wrong. Please try again.')
+    }
+}, (err, req, res, next) => {
+    if (err.code === 'ENOENT') {
+        storageFolder()
+        res.send({err: 'Storage directory does not exist,try again.'})
+    } else
+        res.send({err: err.message})
+})
+
+
+router.delete('/users/me/cover', async (req, res,next) => {
+    const deletePicture =  await deleteBlob(req.body.pictureName)
+    try {
+        if (deletePicture.succeeded === true){
+            res.status(deletePicture._response.status).send({status:"File Deleted Successfully.",deletePicture})
+        } else {
+            throw new Error('Failed to delete picture.')
+        }
+    } catch (e) {
+        e.statusCode = deletePicture._response.status
+        next(e)
+    }
+},errorHandler)
+
+
+router.get('/createContainer', async (req, res, next) => {
     const createContainerResponse = await createAzureContainer(req.body.nameContainer)
     console.log(createContainerResponse)
     res.send()
 })
 
-router.get('/listContainer',async (req, res,next)=>{
+router.get('/listContainer', async (req, res, next) => {
     let containers = await listAzureContainers()
-    for await (const container of containers){
+    for await (const container of containers) {
         console.log(container.name)
     }
     res.send()
 })
 
-router.get('/uploadBlob',async (req, res,next) => {
-    const imagePath = path.join(__dirname,'../../public/img/1920.png')
-    const uploadRespon = await uploadBlob(imagePath,req.body.pictureName)
+router.get('/uploadBlob', async (req, res, next) => {
+    const imagePath = path.join(__dirname, '../../public/img/1920.png')
+    const uploadRespon = await uploadBlob(imagePath, req.body.pictureName)
     console.log(uploadRespon)
     res.send()
 })
 
-router.get('/listBlob', async (req, res,next)=>{
+router.get('/listBlob', async (req, res, next) => {
     console.clear()
     const listBlobs = await listBlob()
 
-    for await (const iterated of listBlobs){
+    for await (const iterated of listBlobs) {
         console.log(iterated.name)
     }
     res.send()
 })
 
-router.get('/downloadBlob',async (req, res,next) =>{
+router.get('/downloadBlob', async (req, res, next) => {
     console.clear()
     try {
         const downloadPicture = await downloadBlob(req.body.pictureName)
         downloadPicture.pipe(res)
-    }catch (e) {
+    } catch (e) {
         res.status(500).send()
     }
 })
 
-router.delete('/deleteBlob',async (req, res,next) =>{
-    try{
+router.delete('/deleteBlob', async (req, res, next) => {
+    try {
         const deletePicture = await deleteBlob(req.body.pictureName)
         res.send(deletePicture)
-    }catch (e) {
+    } catch (e) {
         res.status(500).send()
     }
 })
