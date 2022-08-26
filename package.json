@@ -21,7 +21,7 @@
     "izitoast": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
     "method-override": "^3.0.0",
-    "mongoose": "^6.1.9",
+    "mongoose": "^6.4.6",
     "multer": "^1.4.4",
     "node-fetch": "^2.6.7",
     "nodemailer": "^6.7.2",
