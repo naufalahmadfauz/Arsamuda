@@ -34,7 +34,6 @@ router.post('/signup', async (req, res) => {
         res.status(500).send(e)
     }
 })
-
 router.post('/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
@@ -118,7 +117,8 @@ router.get('/users/:id/avatar', async (req, res) => {
 
 router.get('/users/me/cover', auth, async (req, res, next) => {
     try {
-        let downloadPicture = await downloadBlob(req.body.coverPicturename)
+        // let downloadPicture = await downloadBlob(req.body.coverPicturename)
+        let downloadPicture = await downloadBlob("picpost_1654469535091_ATL3X.jpg")
         downloadPicture.pipe(res)
     } catch (e) {
         if (e.message.match(/The specified blob does not exist/)) {
@@ -134,7 +134,7 @@ router.get('/users/me/cover', auth, async (req, res, next) => {
 router.post('/users/me/cover', auth, uploadCover.single('cover'), async (req, res, next) => {
     try {
         const picPath = path.join(__dirname, `../../storage/covers/${req.file.filename}`)
-        await uploadBlob(picPath, req.file.filename)
+        console.log(await uploadBlob(picPath, req.file.filename))
         res.send({status: "Picture uploaded successfully"})
     } catch (e) {
         next(e)
