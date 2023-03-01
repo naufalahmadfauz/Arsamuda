@@ -4,6 +4,7 @@ const fs = require("fs")
 const multer = require("multer")
 const randomString = require("randomstring")
 
+//this function check if directory exists,if not, then create one. it returns promise
 const storageFolder = async () => {
     const pathtopic = path.join(__dirname, '../../storage/covers')
     try {
@@ -16,6 +17,8 @@ const storageFolder = async () => {
         })
     }
 }
+
+//this function configure for single upload,it doesn't use storage setting because it the function that use this function store the picture into mongodb as buffer '
 const upload = multer({
     limits: {
         fileSize: 1000000
@@ -27,7 +30,7 @@ const upload = multer({
         cb(undefined, true)
     }
 })
-
+//this function makes configuration for storing file. this utilize diskstore so it will store the file in disk.
 const uploadCoverStorage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'storage/covers')
@@ -37,7 +40,7 @@ const uploadCoverStorage = multer.diskStorage({
         cb(null, file.fieldname + '_' + Date.now() + '_' + randomString.generate({length: 5}) + extfilename)
     }
 })
-
+//this funcion set uploadCover with configured storage
 const uploadCover = multer({
     storage: uploadCoverStorage,
 

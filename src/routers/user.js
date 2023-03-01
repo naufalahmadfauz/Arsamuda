@@ -3,6 +3,7 @@ const router = new express.Router()
 const auth = require('../middleware/auth')
 const errorHandler = require('../middleware/errorHandler')
 const User = require('../models/User')
+const Profile = require('../models/Profile')
 const sharp = require('sharp')
 const path = require("path");
 const {
@@ -14,13 +15,13 @@ const {
     deleteBlob
 } = require('../functions/imageUpload')
 const {storageFolder, uploadCover, uploadCoverStorage, upload} = require("../functions/multerConfiguration")
+
 uploadCoverStorage
 
 router.post('/signup', async (req, res) => {
     const user = new User(req.body)
-    console.log(user)
     const userInput = Object.keys(req.body)
-    const allowedInput = ['nama', 'email', 'password', 'biodata', 'tglLahir']
+    const allowedInput = ['email', 'password']
     const isValidOperation = userInput.every((update) => allowedInput.includes(update))
 
     if (!isValidOperation) {
@@ -62,7 +63,7 @@ router.get('/users/me', auth, async (req, res) => {
 
 router.patch('/users/me', auth, async (req, res) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['nama', 'email', 'password', 'biodata', 'tglLahir']
+    const allowedUpdates = ['email', 'password']
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
     if (!isValidOperation) {
@@ -118,7 +119,7 @@ router.get('/users/:id/avatar', async (req, res) => {
 router.get('/users/me/cover', auth, async (req, res, next) => {
     try {
         // let downloadPicture = await downloadBlob(req.body.coverPicturename)
-        let downloadPicture = await downloadBlob("picpost_1654469535091_ATL3X.jpg")
+        let downloadPicture = await downloadBlob(req.body.coverPicturename)
         downloadPicture.pipe(res)
     } catch (e) {
         if (e.message.match(/The specified blob does not exist/)) {

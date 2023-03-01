@@ -4,11 +4,6 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
 
 const userSchema = new mongoose.Schema({
-    nama:{
-        type:String,
-        required:true,
-        trim:true
-    },
     email:{
         type:String,
         unique:true,
@@ -32,26 +27,14 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
-    biodata:{
-        type:String,
-        required:false,
-        trim:true,
-        default:'Hi!',
-    },
-    role:{
-        type:Number,
-        required:true,
-        default:'1',
-    },
-    tglLahir:{
-      type:Date,
-      required:true,
-    },
-    avatar:{
-        type:Buffer,
-    }
 },{
     timestamps:true
+})
+
+userSchema.virtual('userProfile',{
+    ref:'Profile',
+    localField:'_id',
+    foreignField:'userId'
 })
 
 
