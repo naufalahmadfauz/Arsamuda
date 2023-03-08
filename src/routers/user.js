@@ -6,6 +6,8 @@ const User = require('../models/User')
 const Profile = require('../models/Profile')
 const sharp = require('sharp')
 const path = require("path");
+const fs = require('fs');
+
 const {
     createAzureContainer,
     listAzureContainers,
@@ -14,20 +16,53 @@ const {
     downloadBlob,
     deleteBlob
 } = require('../functions/imageUpload')
-const {storageFolder, uploadCover, uploadCoverStorage, upload} = require("../functions/multerConfiguration")
+const {storageFolder, uploadCover, uploadCoverStorage, avatarUpload} = require("../functions/multerConfiguration")
+// uploadCoverStorage
 
-uploadCoverStorage
 
-router.post('/signup', async (req, res) => {
-    const user = new User(req.body)
+let uploadProfilePictureToBlob = async () => {
+
+}
+
+let renameProfilePicture = (oldpicturepath, newpicturepath) => {
+    let oldpicpath = path.join(__dirname, oldpicturepath)
+    let newpicpath = path.join(__dirname, newpicturepath)
+    return fs.rename(oldpicpath, newpicpath, (err) => {
+        if (err) {
+            throw err
+        } else {
+            console.log('nice')
+        }
+    })
+}
+router.post('/signup', avatarUpload.single('avatar'), async (req, res) => {
     const userInput = Object.keys(req.body)
-    const allowedInput = ['email', 'password']
+    const allowedInput = ['email', 'password', 'fullName', 'displayName', 'aboutMe', 'birthDate', 'gender']
     const isValidOperation = userInput.every((update) => allowedInput.includes(update))
-
     if (!isValidOperation) {
         return res.status(400).send({error: 'Bad Inputs'})
     }
+
+    const user = new User({
+        email: req.body.email,
+        password: req.body.password
+    })
+    let newPictureName = req.file.filename.substring(0, req.file.filename.length - 4) + '_' + user._id + path.extname(req.file.originalname)
+    renameProfilePicture(`../../storage/avatar/${req.file.filename}`, `../../storage/avatar/${newPictureName}`)
+
+
+    const profile = new Profile({
+        userId: user._id,
+        fullName: req.body.fullName,
+        displayName: req.body.displayName,
+        aboutMe: req.body.aboutMe,
+        birthDate: req.body.birthDate,
+        gender: req.body.gender,
+        avatar: newPictureName
+    })
+
     try {
+
         await user.save()
         req.session.userid = user._id.toString()
         res.status(201).send({user})
@@ -35,6 +70,7 @@ router.post('/signup', async (req, res) => {
         res.status(500).send(e)
     }
 })
+
 router.post('/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
@@ -88,14 +124,14 @@ router.delete('/users/me', auth, async (req, res) => {
     }
 })
 
-router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
-    const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
-    req.user.avatar = buffer
-    await req.user.save()
-    res.send(200)
-}, (error, req, res, next) => {
-    res.status(400).send({error: error.message})
-})
+// router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+//     const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
+//     req.user.avatar = buffer
+//     await req.user.save()
+//     res.send(200)
+// }, (error, req, res, next) => {
+//     res.status(400).send({error: error.message})
+// })
 
 router.delete('/users/me/avatar', auth, async (req, res) => {
     req.user.avatar = undefined
@@ -172,11 +208,11 @@ router.post('/users/me/picpost', auth, uploadCover.array('picpost', 5), async (r
 })
 
 
-router.delete('/users/me/cover', async (req, res,next) => {
-    const deletePicture =  await deleteBlob(req.body.pictureName)
+router.delete('/users/me/cover', async (req, res, next) => {
+    const deletePicture = await deleteBlob(req.body.pictureName)
     try {
-        if (deletePicture.succeeded === true){
-            res.status(deletePicture._response.status).send({status:"File Deleted Successfully.",deletePicture})
+        if (deletePicture.succeeded === true) {
+            res.status(deletePicture._response.status).send({status: "File Deleted Successfully.", deletePicture})
         } else {
             throw new Error('Failed to delete picture.')
         }
@@ -184,7 +220,7 @@ router.delete('/users/me/cover', async (req, res,next) => {
         e.statusCode = deletePicture._response.status
         next(e)
     }
-},errorHandler)
+}, errorHandler)
 
 
 router.get('/createContainer', async (req, res, next) => {

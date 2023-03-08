@@ -4,6 +4,5 @@ config/dev.env
 tests
 arsadb/
 azurite/
-storage
 catatan.txt
 captcha.txt
