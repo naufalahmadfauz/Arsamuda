@@ -19,11 +19,6 @@ const {
 const {storageFolder, uploadCover, uploadCoverStorage, avatarUpload} = require("../functions/multerConfiguration")
 // uploadCoverStorage
 
-
-let uploadProfilePictureToBlob = async () => {
-
-}
-
 let renameProfilePicture = (oldpicturepath, newpicturepath) => {
     let oldpicpath = path.join(__dirname, oldpicturepath)
     let newpicpath = path.join(__dirname, newpicturepath)
@@ -62,7 +57,7 @@ router.post('/signup', avatarUpload.single('avatar'), async (req, res) => {
     })
 
     try {
-
+        let uploadAvatarToBlob = await uploadBlob(`../../storage/avatar/${newPictureName}`)
         await user.save()
         req.session.userid = user._id.toString()
         res.status(201).send({user})
