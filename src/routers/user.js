@@ -7,6 +7,7 @@ const Profile = require('../models/Profile')
 const sharp = require('sharp')
 const path = require("path");
 const fs = require('fs');
+const util = require("util")
 
 const {
     createAzureContainer,
@@ -16,10 +17,17 @@ const {
     downloadBlob,
     deleteBlob
 } = require('../functions/imageUpload')
-const {storageFolder, uploadCover, uploadCoverStorage, avatarUpload} = require("../functions/multerConfiguration")
+const {
+    storageFolder,
+    uploadAvatarStorage,
+    uploadCover,
+    uploadCoverStorage,
+    avatarUpload
+} = require("../functions/multerConfiguration")
 // uploadCoverStorage
+uploadAvatarStorage
 
-let renameProfilePicture = (oldpicturepath, newpicturepath) => {
+let renameProfilePicture = async (oldpicturepath, newpicturepath) => {
     let oldpicpath = path.join(__dirname, oldpicturepath)
     let newpicpath = path.join(__dirname, newpicturepath)
     return fs.rename(oldpicpath, newpicpath, (err) => {
@@ -30,9 +38,50 @@ let renameProfilePicture = (oldpicturepath, newpicturepath) => {
         }
     })
 }
+
+router.post('/coba', avatarUpload.single('avatar'), async (req, res) => {
+
+    try {
+        const user = new User({
+            email: req.body.email,
+            password: req.body.password
+        })
+        let newPictureName = req.file.filename.substring(0, req.file.filename.length - 4) + '_' + user._id + path.extname(req.file.originalname)
+        let pcpath = path.join(__dirname, `../../storage/avatar/${req.file.filename}`)
+        let pcpathnew = path.join(__dirname, `../../storage/avatar/${newPictureName}`)
+
+        let promisifyRenameFile = util.promisify(fs.rename)
+
+        await promisifyRenameFile(pcpath, pcpathnew)
+        // fs.rename(pcpath,pcpathnew,(err)=>{
+        //     if(err){
+        //         throw err
+        //     }else{
+        //
+
+        //         console.log('nice')
+        //     }
+        // })
+
+        // renameProfilePicture(`../../storage/avatar/${req.file.filename}`, `../../storage/avatar/${newPictureName}`)
+        // console.log(pcpathnew)
+
+        // fs.open(pcpathnew, 'r', (err, fd) => {
+        //     console.log(fd)
+        // });
+        let uploadAvatarToBlob = await uploadBlob(pcpathnew,'xD')
+
+
+        res.send()
+    } catch (err) {
+        res.send(err)
+    }
+
+})
+
 router.post('/signup', avatarUpload.single('avatar'), async (req, res) => {
     const userInput = Object.keys(req.body)
-    const allowedInput = ['email', 'password', 'fullName', 'displayName', 'aboutMe', 'birthDate', 'gender']
+    const allowedInput = ['email', 'password', 'fullName', 'displayName', 'aboutMe', 'birthDate', 'gender', 'avatar']
     const isValidOperation = userInput.every((update) => allowedInput.includes(update))
     if (!isValidOperation) {
         return res.status(400).send({error: 'Bad Inputs'})
@@ -43,6 +92,7 @@ router.post('/signup', avatarUpload.single('avatar'), async (req, res) => {
         password: req.body.password
     })
     let newPictureName = req.file.filename.substring(0, req.file.filename.length - 4) + '_' + user._id + path.extname(req.file.originalname)
+
     renameProfilePicture(`../../storage/avatar/${req.file.filename}`, `../../storage/avatar/${newPictureName}`)
 
 
@@ -57,7 +107,7 @@ router.post('/signup', avatarUpload.single('avatar'), async (req, res) => {
     })
 
     try {
-        let uploadAvatarToBlob = await uploadBlob(`../../storage/avatar/${newPictureName}`)
+        // let uploadAvatarToBlob = await uploadBlob(`../../storage/avatar/${newPictureName}`,newPictureName)
         await user.save()
         req.session.userid = user._id.toString()
         res.status(201).send({user})
