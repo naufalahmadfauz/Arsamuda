@@ -2,7 +2,7 @@ const {createReadStream}=require('fs');
 const {BlobServiceClient} = require("@azure/storage-blob");
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_CONNECTION);
-const containerClient = blobServiceClient.getContainerClient('percobaan');
+const containerClient = blobServiceClient.getContainerClient(process.env.CONTAINER_NAME);
 
 
 const createAzureContainer = async (containerName)=>{
