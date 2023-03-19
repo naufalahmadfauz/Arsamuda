@@ -51,6 +51,7 @@ router.post('/coba', avatarUpload.single('avatar'), async (req, res) => {
         let pcpathnew = path.join(__dirname, `../../storage/avatar/${newPictureName}`)
 
         let promisifyRenameFile = util.promisify(fs.rename)
+        let promisifyDeleteFile = util.promisify(fs.unlink)
 
         await promisifyRenameFile(pcpath, pcpathnew)
         // fs.rename(pcpath,pcpathnew,(err)=>{
@@ -69,8 +70,10 @@ router.post('/coba', avatarUpload.single('avatar'), async (req, res) => {
         // fs.open(pcpathnew, 'r', (err, fd) => {
         //     console.log(fd)
         // });
-        let uploadAvatarToBlob = await uploadBlob(pcpathnew,'xD')
-
+        let uploadAvatarToBlob = await uploadBlob(pcpathnew,newPictureName)
+        let deleteFileAfterUploadBlob = await promisifyDeleteFile(pcpathnew)
+        console.log(uploadAvatarToBlob)
+        console.log(deleteFileAfterUploadBlob)
 
         res.send()
     } catch (err) {
@@ -86,30 +89,36 @@ router.post('/signup', avatarUpload.single('avatar'), async (req, res) => {
     if (!isValidOperation) {
         return res.status(400).send({error: 'Bad Inputs'})
     }
-
-    const user = new User({
-        email: req.body.email,
-        password: req.body.password
-    })
-    let newPictureName = req.file.filename.substring(0, req.file.filename.length - 4) + '_' + user._id + path.extname(req.file.originalname)
-
-    renameProfilePicture(`../../storage/avatar/${req.file.filename}`, `../../storage/avatar/${newPictureName}`)
-
-
-    const profile = new Profile({
-        userId: user._id,
-        fullName: req.body.fullName,
-        displayName: req.body.displayName,
-        aboutMe: req.body.aboutMe,
-        birthDate: req.body.birthDate,
-        gender: req.body.gender,
-        avatar: newPictureName
-    })
-
     try {
-        // let uploadAvatarToBlob = await uploadBlob(`../../storage/avatar/${newPictureName}`,newPictureName)
+        const user = new User({
+            email: req.body.email,
+            password: req.body.password
+        })
+
+        let newPictureName = req.file.filename.substring(0, req.file.filename.length - 4) + '_' + user._id + path.extname(req.file.originalname)
+        let pcpath = path.join(__dirname, `../../storage/avatar/${req.file.filename}`)
+        let pcpathnew = path.join(__dirname, `../../storage/avatar/${newPictureName}`)
+
+        let promisifyRenameFile = util.promisify(fs.rename)
+        let promisifyDeleteFile = util.promisify(fs.unlink)
+
+        await promisifyRenameFile(pcpath, pcpathnew)
+
+        const profile = new Profile({
+            userId: user._id,
+            fullName: req.body.fullName,
+            displayName: req.body.displayName,
+            aboutMe: req.body.aboutMe,
+            birthDate: req.body.birthDate,
+            gender: req.body.gender,
+            avatar: newPictureName
+        })
+        let uploadAvatarToBlob = await uploadBlob(pcpathnew,newPictureName)
+        await promisifyDeleteFile(pcpathnew)
+
         await user.save()
         req.session.userid = user._id.toString()
+        console.log(uploadAvatarToBlob)
         res.status(201).send({user})
     } catch (e) {
         res.status(500).send(e)
