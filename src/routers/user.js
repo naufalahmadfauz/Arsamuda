@@ -70,7 +70,7 @@ router.post('/coba', avatarUpload.single('avatar'), async (req, res) => {
         // fs.open(pcpathnew, 'r', (err, fd) => {
         //     console.log(fd)
         // });
-        let uploadAvatarToBlob = await uploadBlob(pcpathnew,newPictureName)
+        let uploadAvatarToBlob = await uploadBlob(pcpathnew, newPictureName)
         let deleteFileAfterUploadBlob = await promisifyDeleteFile(pcpathnew)
         console.log(uploadAvatarToBlob)
         console.log(deleteFileAfterUploadBlob)
@@ -113,10 +113,10 @@ router.post('/signup', avatarUpload.single('avatar'), async (req, res) => {
             gender: req.body.gender,
             avatar: newPictureName
         })
-        let uploadAvatarToBlob = await uploadBlob(pcpathnew,newPictureName)
-        await promisifyDeleteFile(pcpathnew)
-
+        let uploadAvatarToBlob = await uploadBlob(pcpathnew, newPictureName)
         await user.save()
+        await profile.save()
+        await promisifyDeleteFile(pcpathnew)
         req.session.userid = user._id.toString()
         console.log(uploadAvatarToBlob)
         res.status(201).send({user})
